@@ -13,7 +13,10 @@ import (
 const (
 	SCHEMA_FILE = "./data/schema.sql"
 	SEED_FILE   = "./data/seed.sql"
+	TEST_DB     = "./test.db"
 )
+
+var DB *sql.DB
 
 func initDB(dbPath string) {
 	dbFile, err := os.Open(dbPath)
@@ -21,9 +24,19 @@ func initDB(dbPath string) {
 		fmt.Println("Creating Database at ", dbPath)
 		createDB(dbPath)
 	} else {
-		fmt.Println("Database found at ", dbPath)
 		dbFile.Close()
+		openDB(dbPath)
+		fmt.Println("Database found at ", dbPath)
 	}
+}
+
+func openDB(dbPath string) {
+	var err error
+	DB, err = sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	DB.Ping()
 }
 
 /*
@@ -32,17 +45,12 @@ and has limitations (doesn't support multi-line SQL in schema and seed file) but
 to require the user doing manual steps to get going.
 */
 func createDB(dbPath string) {
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	execFile(db, SCHEMA_FILE)
-	execFile(db, SEED_FILE)
+	openDB(dbPath)
+	execFile(SCHEMA_FILE)
+	execFile(SEED_FILE)
 }
 
-func execFile(db *sql.DB, filePath string) {
+func execFile(filePath string) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatal(err)
@@ -56,7 +64,7 @@ func execFile(db *sql.DB, filePath string) {
 			continue
 		}
 
-		_, err := db.Exec(sql)
+		_, err := DB.Exec(sql)
 		if err != nil {
 			log.Printf("%q: %s\n", err, sql)
 			return
@@ -72,4 +80,12 @@ func isCommentOrEmptyLine(sql string) bool {
 	emptyLine := regexp.MustCompile("^\\s*$")
 
 	return comment.MatchString(sql) || emptyLine.MatchString(sql)
+}
+
+func createTestDB() {
+	os.Remove(TEST_DB)
+	createDB(TEST_DB)
+}
+func removeTestDB() {
+	os.Remove(TEST_DB)
 }

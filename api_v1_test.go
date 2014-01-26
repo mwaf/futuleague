@@ -5,6 +5,8 @@ import (
 )
 
 func TestGameRoot(t *testing.T) {
+	createTestDB()
+	defer removeTestDB()
 	var games []Game
 	getAndUnmarshalJson(t, "/root", &games)
 

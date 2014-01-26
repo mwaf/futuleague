@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -17,7 +18,8 @@ func routeAPIv1(r *mux.Router) {
 }
 
 func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Games games games, i.e. FIFA, NHL.")
+	games := Game{}.FetchAll()
+	returnJson(w, games)
 }
 
 func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
@@ -26,13 +28,15 @@ func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "info for game, get them clubs for %s", game)
 }
 
-type Game struct {
-	Name  string `json:"name"`
-	Clubs []Club `json:"clubs"`
-}
-
-type Club struct {
-	Name   string  `json:"name"`
-	League string  `json:"name"`
-	Stars  float64 `json:"stars"`
+func returnJson(w http.ResponseWriter, v interface{}) {
+	result, err := json.Marshal(v)
+	if err == nil {
+		header := w.Header()
+		header.Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(result)
+	} else {
+		w.WriteHeader(500)
+		fmt.Fprintf(w, "Could not marshal JSON.")
+	}
 }
