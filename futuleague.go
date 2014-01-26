@@ -15,11 +15,16 @@ func main() {
 	fmt.Println("Welcome to the Futu League backend!")
 	initDB(*dbPath)
 
-	r := mux.NewRouter()
-	r.HandleFunc("/", ServerRoot)
-
+	r := defineRoutes()
 	fmt.Printf("Listening at http://localhost:%d\n", *port)
 	http.ListenAndServe(fmt.Sprintf(":%d", *port), r)
+}
+
+func defineRoutes() *mux.Router {
+	r := mux.NewRouter()
+	routeAPIv1(r)
+	r.HandleFunc("/", ServerRoot)
+	return r
 }
 
 func ServerRoot(w http.ResponseWriter, r *http.Request) {
