@@ -1,0 +1,3 @@
+# Ignoring executable and default databaselocation.
+futuleague
+/data/database.db
