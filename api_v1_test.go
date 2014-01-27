@@ -24,7 +24,7 @@ func TestFIFAClubs(t *testing.T) {
 
 	passed := false
 	for _, club := range game.Clubs {
-		if club.Name == "Paris SG" && club.League == "Ligue 1" && club.Stars == 5 {
+		if club.Name == "PSG" && club.League == "Ligue 1" && club.Country == "France" && club.Stars == 5 {
 			passed = true
 			break
 		}

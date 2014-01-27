@@ -39,7 +39,7 @@ func (g Game) FetchAll() []Game {
 }
 
 func (g Game) FetchByName(name string) (Game, error) {
-	rows, err := DB.Query("select c.name, c.league, c.stars from clubs c join games g where c.game = g.id and g.name=?", name)
+	rows, err := DB.Query("select c.name, c.league, c.country, c.stars from clubs c join games g where c.game = g.id and g.name=?", name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func (g Game) FetchByName(name string) (Game, error) {
 	count := 0
 	for ; rows.Next(); count++ {
 		var club Club
-		if err := rows.Scan(&club.Name, &club.League, &club.Stars); err != nil {
+		if err := rows.Scan(&club.Name, &club.League, &club.Country, &club.Stars); err != nil {
 			log.Fatal(err)
 		} else {
 			result.PushBack(club)
@@ -72,7 +72,8 @@ func (g Game) FetchByName(name string) (Game, error) {
 }
 
 type Club struct {
-	Name   string  `json:"name"`
-	League string  `json:"league"`
-	Stars  float64 `json:"stars"`
+	Name    string  `json:"name"`
+	League  string  `json:"league"`
+	Country string  `json:"country"`
+	Stars   float64 `json:"stars"`
 }
