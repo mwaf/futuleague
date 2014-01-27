@@ -23,7 +23,7 @@ func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
 	for i, g := range games {
 		gameList[i] = g.Name
 	}
-	returnJson(w, gameList)
+	returnJson(w, Root{Games: gameList})
 }
 
 func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {

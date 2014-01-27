@@ -6,6 +6,10 @@ import (
 	"log"
 )
 
+type Root struct {
+	Games []string `json:"games"`
+}
+
 type Game struct {
 	Name  string `json:"name"`
 	Clubs []Club `json:"clubs"`
