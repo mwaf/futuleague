@@ -14,5 +14,7 @@ insert into clubs (game, name, league, stars) values (1, "Inter Milan", "Seria A
 -- TODO the rest and proper ratings
 
 -- NHL14 Clubs
+insert into clubs (game, name, league, stars) values (2, "Edmonto Oilers", "NHL", 5);
+insert into clubs (game, name, league, stars) values (2, "New Jersey Devils", "NHL", 5);
 -- TODO
 

@@ -7,13 +7,13 @@ import (
 func TestGameRoot(t *testing.T) {
 	createTestDB()
 	defer removeTestDB()
-	var games []Game
+	var games []string
 	getAndUnmarshalJson(t, "/root", &games)
 
-	expected := []Game{Game{Name: "FIFA14"}, Game{Name: "NHL14"}}
+	expected := []string{"FIFA14", "NHL14"}
 	assertIntEquals(t, len(expected), len(games))
 	for i, g := range games {
-		assertEquals(t, expected[i].Name, g.Name)
+		assertEquals(t, expected[i], g)
 	}
 
 }

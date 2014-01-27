@@ -19,13 +19,22 @@ func routeAPIv1(r *mux.Router) {
 
 func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
 	games := Game{}.FetchAll()
-	returnJson(w, games)
+	gameList := make([]string, len(games))
+	for i, g := range games {
+		gameList[i] = g.Name
+	}
+	returnJson(w, gameList)
 }
 
 func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	game := vars["game"]
-	fmt.Fprintf(w, "info for game, get them clubs for %s", game)
+	name := mux.Vars(r)["game"]
+	game, err := Game{}.FetchByName(name)
+	if err == nil {
+		returnJson(w, game)
+	} else {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "Could not find game.")
+	}
 }
 
 func returnJson(w http.ResponseWriter, v interface{}) {
