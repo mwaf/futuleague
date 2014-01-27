@@ -13,8 +13,14 @@ var v1 = APIv1{} // no need to have several of these
 
 func routeAPIv1(r *mux.Router) {
 	// TODO subrouter for headers matcing json + apiv1
-	r.HandleFunc("/root", v1.root)
-	r.HandleFunc("/{game}", v1.game)
+	get := r.Methods("GET").Subrouter()
+	post := r.Methods("POST").Subrouter()
+
+	get.HandleFunc("/players/{player}", v1.player)
+	post.HandleFunc("/players", v1.createPlayer)
+
+	get.HandleFunc("/root", v1.root)
+	get.HandleFunc("/{game}", v1.game)
 }
 
 func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +41,20 @@ func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		fmt.Fprintf(w, "Could not find game.")
 	}
+}
+
+func (v1 APIv1) player(w http.ResponseWriter, r *http.Request) {
+}
+func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	var player Player
+	player.Identifier = r.Form.Get("identifier")
+	player.Name = r.Form.Get("name")
+	player.Rating = DEFAULT_PLAYER_RATING
+	fmt.Println("got error you! ", player.Save())
+
+	path := fmt.Sprintf("/players/%s", player.Identifier)
+	http.Redirect(w, r, path, http.StatusCreated)
 }
 
 func returnJson(w http.ResponseWriter, v interface{}) {

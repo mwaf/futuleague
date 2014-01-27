@@ -6,6 +6,10 @@ import (
 	"log"
 )
 
+const (
+	DEFAULT_PLAYER_RATING = 5
+)
+
 type Root struct {
 	Games []string `json:"games"`
 }
@@ -80,4 +84,20 @@ type Club struct {
 	League  string  `json:"league"`
 	Country string  `json:"country"`
 	Stars   float64 `json:"stars"`
+}
+
+type Player struct {
+	Identifier string  `json:"identifier"`
+	Name       string  `json:"name"`
+	Rating     float64 `json:"rating"`
+}
+
+func (p Player) Save() error {
+	_, err := DB.Exec(`insert into players (identifier, name, rating) values (?, ?, ?);`, p.Identifier, p.Name, p.Rating)
+	return err
+}
+
+func (p Player) FetchByName() (Player, error) {
+	// todo get stuff from DB
+	return p, nil
 }
