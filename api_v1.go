@@ -44,6 +44,14 @@ func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
 }
 
 func (v1 APIv1) player(w http.ResponseWriter, r *http.Request) {
+	ident := mux.Vars(r)["player"]
+	player, err := Player{}.FetchByIdentifier(ident)
+	if err == nil {
+		returnJson(w, player)
+	} else {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "Could not find player.")
+	}
 }
 func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -51,10 +59,38 @@ func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
 	player.Identifier = r.Form.Get("identifier")
 	player.Name = r.Form.Get("name")
 	player.Rating = DEFAULT_PLAYER_RATING
-	fmt.Println("got error you! ", player.Save())
 
+	err := player.Save()
+	switch {
+	case err == nil:
+		v1.returnPlayerWithRedirect(w, r, player, http.StatusCreated)
+	case err.Error() == PLAYER_ALREADY_EXISTS_ERROR:
+		player, err = Player{}.FetchByIdentifier(player.Identifier)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Player exists but could not be fetched.")
+			return
+		}
+		v1.returnPlayerWithRedirect(w, r, player, http.StatusSeeOther)
+	case err != nil:
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Unable to create player.")
+	}
+}
+
+func (v1 APIv1) returnPlayerWithRedirect(w http.ResponseWriter, r *http.Request, player Player, statusCode int) {
+	header := w.Header()
+	header.Add("Content-Type", "application/json")
 	path := fmt.Sprintf("/players/%s", player.Identifier)
-	http.Redirect(w, r, path, http.StatusCreated)
+	http.Redirect(w, r, path, statusCode)
+	output, err := json.Marshal(player)
+	if err == nil {
+		w.Write(output)
+	}
+	// If marshaling fails at this point it's still better to
+	// return the redirect to the actual resource without a body
+	// than confuse the client with an internal srever error (the
+	// player was successfully created after all)
 }
 
 func returnJson(w http.ResponseWriter, v interface{}) {
@@ -65,7 +101,7 @@ func returnJson(w http.ResponseWriter, v interface{}) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(result)
 	} else {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Could not marshal JSON.")
 	}
 }

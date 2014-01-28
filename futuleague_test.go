@@ -28,10 +28,18 @@ func getContents(t *testing.T, path string) ([]byte, *httptest.Server) {
 	return content, ts
 }
 
+func unmarshalJsonFromResponse(t *testing.T, res *http.Response, v interface{}) {
+	content, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("Unable to read body contents")
+	}
+	unmarshalJson(t, content, v)
+}
+
 func unmarshalJson(t *testing.T, content []byte, v interface{}) {
 	err := json.Unmarshal(content, v)
 	if err != nil {
-		t.Errorf("Unable to unmarshal result, got: [%s]", content)
+		t.Errorf("Unable to unmarshal result, got: [%s] %s", content, err)
 	}
 }
 

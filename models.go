@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	DEFAULT_PLAYER_RATING = 5
+	DEFAULT_PLAYER_RATING       = 5
+	PLAYER_ALREADY_EXISTS_ERROR = "column identifier is not unique"
 )
 
 type Root struct {
@@ -97,7 +98,12 @@ func (p Player) Save() error {
 	return err
 }
 
-func (p Player) FetchByName() (Player, error) {
+func (p Player) FetchAll() ([]Player, error) {
+	// todo get stuff from DB
+	return []Player{}, nil
+}
+
+func (p Player) FetchByIdentifier(id string) (Player, error) {
 	// todo get stuff from DB
 	return p, nil
 }

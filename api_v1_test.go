@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -39,31 +38,49 @@ func TestFIFAClubs(t *testing.T) {
 }
 
 func TestCreateGetPlayers(t *testing.T) {
+	createTestDB()
+	defer removeTestDB()
+	ts := httptest.NewServer(defineRoutes())
+
 	form := url.Values{}
 	form.Set("name", "Jon")
 	form.Set("identifier", "jkro")
 
-	ts := httptest.NewServer(defineRoutes())
 	res, err := http.PostForm(ts.URL+"/players", form)
 	if err != nil {
 		t.Errorf("Posting failed ", err)
 	}
-	if res.StatusCode != http.StatusCreated {
-		t.Errorf("Wrong response status")
-	}
+	assertIntEquals(t, http.StatusCreated, res.StatusCode)
+
 	loc, err := res.Location()
 	if err != nil {
 		t.Errorf("No location redirect found")
 		return
 	}
+	var postPlayer Player
+	unmarshalJsonFromResponse(t, res, &postPlayer)
+
+	// Next fetch the redirect content
 	res, err = http.Get(loc.String())
-	content, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		t.Errorf("Unable to read body contets")
+		t.Errorf("Fetching from redirect failed", loc.String())
 	}
-	var player Player
-	unmarshalJson(t, content, player)
+	var getPlayer Player
+	unmarshalJsonFromResponse(t, res, &getPlayer)
+
+	// Now do another post with same ID
+	form.Set("name", "JonJon")
+	res, err = http.PostForm(ts.URL+"/players", form)
+	if err != nil {
+		t.Errorf("Posting failed ", err)
+	}
+	assertIntEquals(t, http.StatusSeeOther, res.StatusCode)
+	var repostPlayer Player
+	unmarshalJsonFromResponse(t, res, &repostPlayer)
 
 	expected := Player{"jkro", "Jon", 5}
-	assertEquals(t, expected, player)
+	assertEquals(t, expected, postPlayer)
+	assertEquals(t, expected, getPlayer)
+	assertEquals(t, expected, repostPlayer)
+
 }
