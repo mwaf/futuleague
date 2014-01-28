@@ -20,31 +20,33 @@ type Game struct {
 	Clubs []Club `json:"clubs"`
 }
 
-func (g Game) FetchAll() []Game {
+func (g Game) FetchAll() ([]Game, error) {
 	rows, err := DB.Query("select name from games")
 	if err != nil {
-		log.Fatal(err)
+		return []Game{}, err
 	}
 
 	result := list.New()
 	for rows.Next() {
 		var game Game
 		if err := rows.Scan(&game.Name); err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return []Game{}, err
 		} else {
 			result.PushBack(game)
 		}
 
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return []Game{}, err
 	}
 
 	games := make([]Game, result.Len())
 	for e, i := result.Front(), 0; e != nil; e, i = e.Next(), i+1 {
 		games[i] = e.Value.(Game)
 	}
-	return games
+	return games, nil
 }
 
 func (g Game) FetchByName(name string) (Game, error) {
@@ -99,8 +101,32 @@ func (p Player) Save() error {
 }
 
 func (p Player) FetchAll() ([]Player, error) {
-	// todo get stuff from DB
-	return []Player{}, nil
+	rows, err := DB.Query(`select identifier, name, rating from players;`)
+	if err != nil {
+		return []Player{}, err
+	}
+	
+	result := list.New()
+	for rows.Next() {
+		var p Player
+		if err := rows.Scan(&p.Identifier, &p.Name, &p.Rating); err != nil {
+			log.Println(err)
+			return []Player{}, err
+		} else {
+			result.PushBack(p)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		log.Println(err)
+		return []Player{}, err
+	}
+	
+	players := make([]Player, result.Len())
+	for e, i := result.Front(), 0; e != nil; e, i = e.Next(), i+1 {
+		players[i] = e.Value.(Player)
+	}
+
+	return players, nil
 }
 
 func (p Player) FetchByIdentifier(id string) (Player, error) {

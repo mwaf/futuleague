@@ -17,6 +17,7 @@ func routeAPIv1(r *mux.Router) {
 	post := r.Methods("POST").Subrouter()
 
 	get.HandleFunc("/players/{player}", v1.player)
+	get.HandleFunc("/players", v1.players)
 	post.HandleFunc("/players", v1.createPlayer)
 
 	get.HandleFunc("/root", v1.root)
@@ -24,7 +25,11 @@ func routeAPIv1(r *mux.Router) {
 }
 
 func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
-	games := Game{}.FetchAll()
+	games, err  := Game{}.FetchAll()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	gameList := make([]string, len(games))
 	for i, g := range games {
 		gameList[i] = g.Name
@@ -38,7 +43,7 @@ func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		returnJson(w, game)
 	} else {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Could not find game.")
 	}
 }
@@ -54,6 +59,13 @@ func (v1 APIv1) player(w http.ResponseWriter, r *http.Request) {
 	}
 	// sorry, being lazy and not differentiating between a DB
 	// failure (Internal Server Error) and player not found (
+}
+
+func (v1 APIv1) players(w http.ResponseWriter, r *http.Request) {
+	players, _ := Player{}.FetchAll()
+	// ignoring error, just showing empty user list if it failed
+	// (or is actually empty)
+	returnJson(w, players)
 }
 
 func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
