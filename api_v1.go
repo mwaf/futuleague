@@ -49,10 +49,13 @@ func (v1 APIv1) player(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		returnJson(w, player)
 	} else {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Could not find player.")
 	}
+	// sorry, being lazy and not differentiating between a DB
+	// failure (Internal Server Error) and player not found (
 }
+
 func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	var player Player

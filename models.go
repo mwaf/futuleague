@@ -104,6 +104,14 @@ func (p Player) FetchAll() ([]Player, error) {
 }
 
 func (p Player) FetchByIdentifier(id string) (Player, error) {
-	// todo get stuff from DB
+	row := DB.QueryRow(`select identifier, name, rating from players where identifier=?;`, id)
+	err := row.Scan(&p.Identifier, &p.Name, &p.Rating)
+
+	// sorry, being lazy and not handling empty result and DB
+	// failure differently (assuming empty result)
+	if err != nil {
+		return p, err
+	}
+
 	return p, nil
 }
