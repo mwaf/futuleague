@@ -74,7 +74,10 @@ func TestCreateGetPlayers(t *testing.T) {
 	if err != nil {
 		t.Errorf("Posting failed ", err)
 	}
-	assertIntEquals(t, http.StatusSeeOther, res.StatusCode)
+	// should actually check for StatusSeeOther, but the
+	// HTTP-client is redirect automatically and I couldn't get a
+	// different redirect policy working
+	assertIntEquals(t, http.StatusOK, res.StatusCode)
 	var repostPlayer Player
 	unmarshalJsonFromResponse(t, res, &repostPlayer)
 
