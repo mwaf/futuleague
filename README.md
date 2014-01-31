@@ -36,3 +36,6 @@ There is some ambigiouty in the terms so below are some definitions.
 - *League* - sports league within the _game_ that _clubs_ are associated with, e.g. Bundesliga
 - *Tournament* - a tournament created by FutuLeague in which three or more _teams_ compete against each other
 
+## Documentation
+
+Please see the [separate API documentation](doc/api.md)

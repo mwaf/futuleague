@@ -11,21 +11,36 @@ type APIv1 struct{}
 
 var v1 = APIv1{} // no need to have several of these
 
+const (
+	ACCEPT_HEADER = "application/vnd.futuleague.v1+json"
+)
+
 func routeAPIv1(r *mux.Router) {
-	// TODO subrouter for headers matcing json + apiv1
-	get := r.Methods("GET").Subrouter()
-	post := r.Methods("POST").Subrouter()
+
+	// POST routes with proper header
+	post := r.Methods("POST").Headers("Accept", ACCEPT_HEADER).Subrouter()
+	post.HandleFunc("/players", v1.createPlayer)
+
+	// GET routes with proper headers
+	get := r.Methods("GET").Headers("Accept", ACCEPT_HEADER).Subrouter()
 
 	get.HandleFunc("/players/{player}", v1.player)
 	get.HandleFunc("/players", v1.players)
-	post.HandleFunc("/players", v1.createPlayer)
 
-	get.HandleFunc("/root", v1.root)
 	get.HandleFunc("/{game}", v1.game)
+	get.HandleFunc("/", v1.root)
+
+	// GET routes without proper headers but .json in the path instead
+	getDotJson := r.Methods("GET").Subrouter()
+	getDotJson.HandleFunc("/players/{player}.json", v1.player)
+	getDotJson.HandleFunc("/players.json", v1.players)
+
+	getDotJson.HandleFunc("/.json", v1.root)
+	getDotJson.HandleFunc("/{game}.json", v1.game)
 }
 
 func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
-	games, err  := Game{}.FetchAll()
+	games, err := Game{}.FetchAll()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

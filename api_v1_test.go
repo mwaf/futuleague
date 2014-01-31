@@ -11,7 +11,7 @@ func TestGameRoot(t *testing.T) {
 	createTestDB()
 	defer removeTestDB()
 	var root Root
-	getAndUnmarshalJson(t, "/root", &root)
+	getAndUnmarshalJson(t, "/", &root)
 
 	expected := []string{"FIFA14", "NHL14"}
 	assertIntEquals(t, len(expected), len(root.Games))
