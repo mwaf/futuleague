@@ -2,12 +2,11 @@ package main
 
 import (
 	"container/list"
-	"errors"
 	"log"
 )
 
 const (
-	DEFAULT_PLAYER_RATING       = 5
+	DEFAULT_PLAYER_RATING       = 5.0
 	PLAYER_ALREADY_EXISTS_ERROR = "column identifier is not unique"
 )
 
@@ -19,77 +18,6 @@ type JsonError struct {
 	TechMessage string `json:"tech_msg"`
 }
 
-type Root struct {
-	Games []string `json:"games"`
-}
-
-type Game struct {
-	Name  string `json:"name"`
-	Clubs []Club `json:"clubs"`
-}
-
-func (g Game) FetchAll() ([]Game, error) {
-	rows, err := DB.Query("select name from games")
-	if err != nil {
-		return []Game{}, err
-	}
-
-	result := list.New()
-	for rows.Next() {
-		var game Game
-		if err := rows.Scan(&game.Name); err != nil {
-			log.Println(err)
-			return []Game{}, err
-		} else {
-			result.PushBack(game)
-		}
-
-	}
-	if err := rows.Err(); err != nil {
-		log.Println(err)
-		return []Game{}, err
-	}
-
-	games := make([]Game, result.Len())
-	for e, i := result.Front(), 0; e != nil; e, i = e.Next(), i+1 {
-		games[i] = e.Value.(Game)
-	}
-	return games, nil
-}
-
-func (g Game) FetchByName(name string) (Game, error) {
-	rows, err := DB.Query("select c.name, c.league, c.country, c.stars from clubs c join games g where c.game = g.id and g.name=?", name)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	result := list.New()
-	count := 0
-	for ; rows.Next(); count++ {
-		var club Club
-		if err := rows.Scan(&club.Name, &club.League, &club.Country, &club.Stars); err != nil {
-			log.Fatal(err)
-		} else {
-			result.PushBack(club)
-		}
-
-	}
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	if count == 0 {
-		return Game{}, errors.New("Could not find game")
-	}
-
-	clubs := make([]Club, count)
-	for e, i := result.Front(), 0; e != nil; e, i = e.Next(), i+1 {
-		clubs[i] = e.Value.(Club)
-	}
-
-	return Game{Name: name, Clubs: clubs}, nil
-}
-
 type Club struct {
 	Name    string  `json:"name"`
 	League  string  `json:"league"`
@@ -97,14 +25,48 @@ type Club struct {
 	Stars   float64 `json:"stars"`
 }
 
+func (g Club) FetchAll() ([]Club, error) {
+	rows, err := DB.Query("select name, league, country, stars from clubs")
+	if err != nil {
+		return []Club{}, err
+	}
+
+	result := list.New()
+	for rows.Next() {
+		var club Club
+		if err := rows.Scan(&club.Name, &club.League, &club.Country, &club.Stars); err != nil {
+			log.Println(err)
+			return []Club{}, err
+		} else {
+			result.PushBack(club)
+		}
+
+	}
+	if err := rows.Err(); err != nil {
+		log.Println(err)
+		return []Club{}, err
+	}
+
+	clubs := make([]Club, result.Len())
+	for e, i := result.Front(), 0; e != nil; e, i = e.Next(), i+1 {
+		clubs[i] = e.Value.(Club)
+	}
+	return clubs, nil
+}
+
 type Player struct {
 	Identifier string  `json:"identifier"`
 	Name       string  `json:"name"`
 	Rating     float64 `json:"rating"`
+	Played     int     `json:"player"`
+	Wins       int     `json:"wins"`
+	Losses     int     `json:"losses"`
+	Ties       int     `json:"ties"`
 }
 
 func (p Player) Save() error {
-	_, err := DB.Exec(`insert into players (identifier, name, rating) values (?, ?, ?);`, p.Identifier, p.Name, p.Rating)
+	_, err := DB.Exec(`insert into players (identifier, name, rating, played, wins, losses, ties) values (?, ?, ?, ?, ?, ?, ?);`,
+		p.Identifier, p.Name, p.Rating, p.Played, p.Wins, p.Losses, p.Ties)
 	return err
 }
 

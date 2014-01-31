@@ -26,7 +26,7 @@ See `$ ./futuleague -h` for additional options.
 
 There is some ambigiouty in the terms so below are some definitions.
 
-- *Game* - the actual video game, e.g. FIFA14
+- *Game* - the actual video game, e.g. FIFA14 - in the current version this is not really used as multiple games in the same instance is not supported.
 - *Player* - human being playing a _game_, e.g. Jon
 - *Team* - one or more (usually a pair of) _players_ playing on the same side in a _game_, e.g. Jon + Martin
 - *Match* - a single matched played in a _game_ between two _teams_ with a _club_, e.g. Jon (Finland) vs. Martin (Germany): 2-2
@@ -39,3 +39,4 @@ There is some ambigiouty in the terms so below are some definitions.
 ## Documentation
 
 Please see the [separate API documentation](doc/api.md)
+

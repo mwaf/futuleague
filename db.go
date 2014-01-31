@@ -12,7 +12,7 @@ import (
 
 const (
 	SCHEMA_FILE = "./data/schema.sql"
-	SEED_FILE   = "./data/seed.sql"
+	SEED_FILE   = "./data/fifa14_seed.sql"
 	TEST_DB     = "./test.db"
 )
 

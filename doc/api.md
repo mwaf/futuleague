@@ -8,8 +8,7 @@ Request to the FutuLeague API must include the `Accept` header with including th
 
 ### GET requests - returns application/json
 
-* `/` - Returns a list of games available.
-* `/{game}` - Returns basic information about the club (currently only name) and a list of clubs in that game.
+* `/clubs` - Returns the list of clubs.
 * `/players` - Returns a list of all players
 * `/players/{player}` - Returns the information of a particular player, where {player} is the player's identifier.
 

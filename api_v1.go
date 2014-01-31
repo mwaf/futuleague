@@ -26,39 +26,23 @@ func routeAPIv1(r *mux.Router) {
 
 	get.HandleFunc("/players/{player}", v1.player)
 	get.HandleFunc("/players", v1.players)
-
-	get.HandleFunc("/{game}", v1.game)
-	get.HandleFunc("/", v1.root)
+	get.HandleFunc("/clubs", v1.clubs)
 
 	// GET routes without proper headers but .json in the path instead
 	getDotJson := r.Methods("GET").Subrouter()
 	getDotJson.HandleFunc("/players/{player}.json", v1.player)
 	getDotJson.HandleFunc("/players.json", v1.players)
 
-	getDotJson.HandleFunc("/.json", v1.root)
-	getDotJson.HandleFunc("/{game}.json", v1.game)
+	getDotJson.HandleFunc("/clubs.json", v1.clubs)
 }
 
-func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
-	games, err := Game{}.FetchAll()
-	if err != nil {
-		returnErrorJson(w, http.StatusInternalServerError, "Could not get games.", err)
-		return
-	}
-	gameList := make([]string, len(games))
-	for i, g := range games {
-		gameList[i] = g.Name
-	}
-	returnJson(w, Root{Games: gameList})
-}
 
-func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
-	name := mux.Vars(r)["game"]
-	game, err := Game{}.FetchByName(name)
+func (v1 APIv1) clubs(w http.ResponseWriter, r *http.Request) {
+	clubs, err := Club{}.FetchAll()
 	if err == nil {
-		returnJson(w, game)
+		returnJson(w, clubs)
 	} else {
-		returnErrorJson(w, http.StatusBadRequest, "Could not find game.", err)
+		returnErrorJson(w, http.StatusBadRequest, "Could not fetch clubs.", err)
 	}
 }
 
@@ -83,7 +67,7 @@ func (v1 APIv1) players(w http.ResponseWriter, r *http.Request) {
 
 func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	var player Player
+	player := Player{Played: 0, Wins: 0, Losses: 0, Ties: 0}
 	player.Identifier = r.Form.Get("identifier")
 	player.Name = r.Form.Get("name")
 	player.Rating = DEFAULT_PLAYER_RATING
@@ -130,7 +114,6 @@ func returnJson(w http.ResponseWriter, v interface{}) {
 		returnErrorJson(w, http.StatusInternalServerError, "Could not marshal JSON.", err)
 	}
 }
-
 
 func returnErrorJson(w http.ResponseWriter, status int, msg string, err error) {
 	v := RootError{Error: JsonError{msg, err.Error()}}
