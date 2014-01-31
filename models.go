@@ -179,19 +179,27 @@ func (m Match) determineTeamOfOne(player Player) (int64, error) {
 	}
 }
 func (m Match) createTeamOfOne(player Player) (int64, error) {
-	res, err := DB.Exec(`insert into teams (type) values ("ONE");`)
+	tx, err := DB.Begin()
 	if err != nil {
+		return -1, err
+	}
+	res, err := tx.Exec(`insert into teams (type) values ("ONE");`)
+	if err != nil {
+		tx.Rollback()
 		return -1, err
 	}
 	teamId, err := res.LastInsertId()
 	if err != nil {
+		tx.Rollback()
 		return teamId, err
 	}
-	_, err = DB.Exec(`insert into teams_1 (team_id, player_id) values (?, (select id from players where identifier = ?));`, teamId, player.Identifier)
+	_, err = tx.Exec(`insert into teams_1 (team_id, player_id) values (?, (select id from players where identifier = ?));`, teamId, player.Identifier)
 	if err != nil {
+		tx.Rollback()
 		return teamId, err
 	}
-	return teamId, nil
+	err = tx.Commit()
+	return teamId, err
 }
 func (m Match) determineTeamOfTwo(players []Player) (int64, error) {
 	return -1, nil
