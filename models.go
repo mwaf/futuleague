@@ -105,7 +105,7 @@ func (p Player) FetchAll() ([]Player, error) {
 	if err != nil {
 		return []Player{}, err
 	}
-	
+
 	result := list.New()
 	for rows.Next() {
 		var p Player
@@ -120,7 +120,7 @@ func (p Player) FetchAll() ([]Player, error) {
 		log.Println(err)
 		return []Player{}, err
 	}
-	
+
 	players := make([]Player, result.Len())
 	for e, i := result.Front(), 0; e != nil; e, i = e.Next(), i+1 {
 		players[i] = e.Value.(Player)
