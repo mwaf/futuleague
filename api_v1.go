@@ -20,6 +20,7 @@ func routeAPIv1(r *mux.Router) {
 	// POST routes with proper header
 	post := r.Methods("POST").Headers("Accept", ACCEPT_HEADER).Subrouter()
 	post.HandleFunc("/players", v1.createPlayer)
+	post.HandleFunc("/matches", v1.submitMatch)
 
 	// GET routes with proper headers
 	get := r.Methods("GET").Headers("Accept", ACCEPT_HEADER).Subrouter()
@@ -27,15 +28,18 @@ func routeAPIv1(r *mux.Router) {
 	get.HandleFunc("/players/{player}", v1.player)
 	get.HandleFunc("/players", v1.players)
 	get.HandleFunc("/clubs", v1.clubs)
+	get.HandleFunc("/matches/{id}", v1.match)
+	get.HandleFunc("/matches", v1.matches)
 
 	// GET routes without proper headers but .json in the path instead
 	getDotJson := r.Methods("GET").Subrouter()
 	getDotJson.HandleFunc("/players/{player}.json", v1.player)
 	getDotJson.HandleFunc("/players.json", v1.players)
+	getDotJson.HandleFunc("/matches/{id}.json", v1.match)
+	getDotJson.HandleFunc("/matches.json", v1.matches)
 
 	getDotJson.HandleFunc("/clubs.json", v1.clubs)
 }
-
 
 func (v1 APIv1) clubs(w http.ResponseWriter, r *http.Request) {
 	clubs, err := Club{}.FetchAll()
@@ -73,55 +77,41 @@ func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
 	player.Rating = DEFAULT_PLAYER_RATING
 
 	err := player.Save()
+	path := fmt.Sprintf("/players/%s", player.Identifier)
 	switch {
 	case err == nil:
-		v1.returnPlayerWithRedirect(w, r, player, http.StatusCreated)
+		returnWithRedirect(w, r, player, path, http.StatusCreated)
 	case err.Error() == PLAYER_ALREADY_EXISTS_ERROR:
 		player, err = Player{}.FetchByIdentifier(player.Identifier)
 		if err != nil {
 			returnErrorJson(w, http.StatusInternalServerError, "Player exists but could not be fetched.", err)
 			return
 		}
-		v1.returnPlayerWithRedirect(w, r, player, http.StatusSeeOther)
+		returnWithRedirect(w, r, player, path, http.StatusSeeOther)
 	case err != nil:
 		returnErrorJson(w, http.StatusInternalServerError, "Unable to create player.", err)
 	}
 }
 
-func (v1 APIv1) returnPlayerWithRedirect(w http.ResponseWriter, r *http.Request, player Player, statusCode int) {
-	header := w.Header()
-	header.Add("Content-Type", "application/json")
-	path := fmt.Sprintf("/players/%s", player.Identifier)
-	http.Redirect(w, r, path, statusCode)
-	output, err := json.Marshal(player)
-	if err == nil {
-		w.Write(output)
-	}
-	// If marshaling fails at this point it's still better to
-	// return the redirect to the actual resource without a body
-	// than confuse the client with an internal srever error (the
-	// player was successfully created after all)
+func (v1 APIv1) matches(w http.ResponseWriter, r *http.Request) {
+	returnJson(w, []Match{})
 }
-
-func returnJson(w http.ResponseWriter, v interface{}) {
-	result, err := json.Marshal(v)
+func (v1 APIv1) match(w http.ResponseWriter, r *http.Request) {
+	returnJson(w, Match{})
+}
+func (v1 APIv1) submitMatch(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var m Match
+	err := decoder.Decode(&m)
+	if err != nil {
+		returnErrorJson(w, http.StatusBadRequest, "Unable to parse submission.", err)
+		return
+	}
+	id, err := m.Save()
 	if err == nil {
-		header := w.Header()
-		header.Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(result)
+		path := fmt.Sprintf("/matches/%d", id)
+		returnWithRedirect(w, r, m, path, http.StatusCreated)
 	} else {
-		returnErrorJson(w, http.StatusInternalServerError, "Could not marshal JSON.", err)
+		returnErrorJson(w, http.StatusInternalServerError, "Could not create match", err)
 	}
-}
-
-func returnErrorJson(w http.ResponseWriter, status int, msg string, err error) {
-	v := RootError{Error: JsonError{msg, err.Error()}}
-	result, _ := json.Marshal(v)
-	// ignore error here, we're returning one after all :)
-
-	header := w.Header()
-	header.Add("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(result)
 }

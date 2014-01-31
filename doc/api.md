@@ -11,8 +11,10 @@ Request to the FutuLeague API must include the `Accept` header with including th
 * `/clubs` - Returns the list of clubs.
 * `/players` - Returns a list of all players
 * `/players/{player}` - Returns the information of a particular player, where {player} is the player's identifier.
+* `/matches` - Returns all the played matches, newest first.
+* `/matches/{id}` - Returns the information of a single match.
 
 ### POST requests - returns application/json
 
 * `/players` - Creates a new player. Takes two arguments `identifier` and `name`. Returns a redirect to /players/{identifier} with status 201 Created. Is identifier already exists returns 303 See other and does not change anything.
-
+* `/matches` - Submits a new match. Expects a JSON body with all the relevant information. Returns a redirect to /mathces/{id} with status 201 Created.

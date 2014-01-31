@@ -19,14 +19,15 @@ type JsonError struct {
 }
 
 type Club struct {
-	Name    string  `json:"name"`
-	League  string  `json:"league"`
-	Country string  `json:"country"`
-	Stars   float64 `json:"stars"`
+	Identifier int     `json:"identifier"`
+	Name       string  `json:"name"`
+	League     string  `json:"league"`
+	Country    string  `json:"country"`
+	Stars      float64 `json:"stars"`
 }
 
 func (g Club) FetchAll() ([]Club, error) {
-	rows, err := DB.Query("select name, league, country, stars from clubs")
+	rows, err := DB.Query("select id, name, league, country, stars from clubs")
 	if err != nil {
 		return []Club{}, err
 	}
@@ -34,7 +35,7 @@ func (g Club) FetchAll() ([]Club, error) {
 	result := list.New()
 	for rows.Next() {
 		var club Club
-		if err := rows.Scan(&club.Name, &club.League, &club.Country, &club.Stars); err != nil {
+		if err := rows.Scan(&club.Identifier, &club.Name, &club.League, &club.Country, &club.Stars); err != nil {
 			log.Println(err)
 			return []Club{}, err
 		} else {
@@ -110,4 +111,31 @@ func (p Player) FetchByIdentifier(id string) (Player, error) {
 	}
 
 	return p, nil
+}
+
+type Match struct {
+	HomeTeam  []Player `json:"homeTeam"`
+	AwayTeam  []Player `json:"awayTeam"`
+	HomeClub  Club     `json:"homeClub"`
+	AwayClub  Club     `json:"awayClub"`
+	HomeScore int      `json:"homeScore"`
+	AwayScore int      `json:"awayScore"`
+	Timestamp string   `json:"timestamp"`
+}
+
+func (m Match) Save() (int64, error) {
+	homeTeamId := m.determineTeamId(m.HomeTeam)
+	awayTeamId := m.determineTeamId(m.AwayTeam)
+	res, err := DB.Exec(`insert into matches (home_team_id, away_team_id, home_club_id, away_club_id, home_score, away_score, timestamp) values (?, ?, ?, ?, ?, ?, ?);`,
+		homeTeamId, awayTeamId, m.HomeClub.Identifier, m.AwayClub.Identifier, m.HomeScore, m.AwayScore, m.Timestamp)
+	if err != nil {
+		return -1, err
+	}
+	return res.LastInsertId()
+}
+
+// Finds the team id for the given set of player or creates a team if
+// they haven't played together before
+func (m Match) determineTeamId(players []Player) int {
+	return 0
 }
