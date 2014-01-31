@@ -42,7 +42,7 @@ func routeAPIv1(r *mux.Router) {
 func (v1 APIv1) root(w http.ResponseWriter, r *http.Request) {
 	games, err := Game{}.FetchAll()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		returnErrorJson(w, http.StatusInternalServerError, "Could not get games.", err)
 		return
 	}
 	gameList := make([]string, len(games))
@@ -58,8 +58,7 @@ func (v1 APIv1) game(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		returnJson(w, game)
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Could not find game.")
+		returnErrorJson(w, http.StatusBadRequest, "Could not find game.", err)
 	}
 }
 
@@ -69,8 +68,7 @@ func (v1 APIv1) player(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		returnJson(w, player)
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Could not find player.")
+		returnErrorJson(w, http.StatusBadRequest, "Could not find player.", err)
 	}
 	// sorry, being lazy and not differentiating between a DB
 	// failure (Internal Server Error) and player not found (
@@ -97,14 +95,12 @@ func (v1 APIv1) createPlayer(w http.ResponseWriter, r *http.Request) {
 	case err.Error() == PLAYER_ALREADY_EXISTS_ERROR:
 		player, err = Player{}.FetchByIdentifier(player.Identifier)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "Player exists but could not be fetched.")
+			returnErrorJson(w, http.StatusInternalServerError, "Player exists but could not be fetched.", err)
 			return
 		}
 		v1.returnPlayerWithRedirect(w, r, player, http.StatusSeeOther)
 	case err != nil:
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Unable to create player.")
+		returnErrorJson(w, http.StatusInternalServerError, "Unable to create player.", err)
 	}
 }
 
@@ -131,7 +127,18 @@ func returnJson(w http.ResponseWriter, v interface{}) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(result)
 	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Could not marshal JSON.")
+		returnErrorJson(w, http.StatusInternalServerError, "Could not marshal JSON.", err)
 	}
+}
+
+
+func returnErrorJson(w http.ResponseWriter, status int, msg string, err error) {
+	v := RootError{Error: JsonError{msg, err.Error()}}
+	result, _ := json.Marshal(v)
+	// ignore error here, we're returning one after all :)
+
+	header := w.Header()
+	header.Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(result)
 }

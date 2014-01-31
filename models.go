@@ -11,6 +11,14 @@ const (
 	PLAYER_ALREADY_EXISTS_ERROR = "column identifier is not unique"
 )
 
+type RootError struct {
+	Error JsonError `json:"error"`
+}
+type JsonError struct {
+	UserMessage string `json:"msg"`
+	TechMessage string `json:"tech_msg"`
+}
+
 type Root struct {
 	Games []string `json:"games"`
 }
