@@ -74,8 +74,13 @@ func (p Player) Save() error {
 	return err
 }
 
+func (p Player) UpdateRating() error {
+	_, err := DB.Exec(`update players set rating = ? where identifier = ?;`, p.Rating, p.Identifier)
+	return err
+}
+
 func (p Player) FetchAll() ([]Player, error) {
-	rows, err := DB.Query(`select identifier, name, rating from players;`)
+	rows, err := DB.Query(`select identifier, name, rating from players order by rating desc;`)
 	if err != nil {
 		return []Player{}, err
 	}
@@ -140,6 +145,18 @@ func (m Match) Save() (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+
+	switch {
+	case m.HomeScore > m.AwayScore:
+		m.HomeTeam[0].Rating += 0.2
+		m.AwayTeam[0].Rating -= 0.2
+	case m.HomeScore < m.AwayScore:
+		m.HomeTeam[0].Rating -= 0.2
+		m.AwayTeam[0].Rating += 0.2
+	}
+	m.HomeTeam[0].UpdateRating()
+	m.AwayTeam[0].UpdateRating()
+
 	return res.LastInsertId()
 }
 
