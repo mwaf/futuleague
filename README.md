@@ -40,3 +40,6 @@ There is some ambigiouty in the terms so below are some definitions.
 
 Please see the [separate API documentation](doc/api.md)
 
+## Using
+
+FutuLeague is designed to be accessed with [the corresponding iOS client](https://github.com/futurice/futuleague-ios).
