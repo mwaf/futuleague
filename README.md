@@ -43,3 +43,7 @@ Please see the [separate API documentation](doc/api.md)
 ## Using
 
 FutuLeague is designed to be accessed with [the corresponding iOS client](https://github.com/futurice/futuleague-ios).
+
+## License
+
+FutuLeague uses a BSD 3-clause license, see [LICENSE](LICENSE).
